@@ -1,9 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SearchActivity">
+    android:background="@color/background"
+    android:orientation="vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/topAppBar"
+        style="@style/ToolbarStyle"
+        app:navigationIcon="@drawable/ic_24_arrow_back"
+        app:title="@string/search" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_marginHorizontal="@dimen/margin_medium"
+        android:layout_marginVertical="@dimen/margin_small"
+        android:background="@drawable/search_background"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="12dp"
+            android:src="@drawable/ic_24_search"
+            app:tint="@color/search_field_content_color" />
+
+        <EditText
+            android:id="@+id/edit_text_search"
+            android:layout_width="@dimen/zero_size"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/margin_small"
+            android:layout_marginEnd="@dimen/margin_small"
+            android:layout_weight="1"
+            android:background="@null"
+            android:fontFamily="@font/ys_display_regular"
+            android:hint="@string/search"
+            android:inputType="textCapSentences|textAutoCorrect"
+            android:maxLines="1"
+            android:textColor="@color/text_color_const"
+            android:textColorHint="@color/search_field_content_color"
+            android:textFontWeight="400"
+            android:textSize="@dimen/search_bar_text_size" />
+
+        <ImageView
+            android:id="@+id/image_view_clear"
+            android:layout_width="36dp"
+            android:layout_height="match_parent"
+            android:foreground="?selectableItemBackground"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_16_cross"
+            app:tint="@color/search_field_content_color" />
+    </LinearLayout>
+
+</LinearLayout>

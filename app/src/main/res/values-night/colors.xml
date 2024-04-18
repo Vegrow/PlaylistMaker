@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="text_color">@color/white</color>
+    <color name="text_color_const">#1A1B22</color>
+    <color name="icon_default_tint">@color/white</color>
+    <color name="icon_default_tint_const">#1A1B22</color>
+    <color name="icon_setting_tint">@color/white</color>
+    <color name="main_activity_background_color">#1A1B22</color>
+    <color name="background">#1A1B22</color>
+    <color name="control_activated">#3772E7</color>
+    <color name="search_background">@color/white</color>
+    <color name="search_field_content_color">#1A1B22</color>
+</resources>
