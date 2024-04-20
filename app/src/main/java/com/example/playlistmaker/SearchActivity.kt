@@ -47,8 +47,9 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun setUpSearchBar() {
-        inputEditText = findViewById<EditText>(R.id.edit_text_search)
+        inputEditText = findViewById(R.id.edit_text_search)
         val clearButton = findViewById<ImageView>(R.id.image_view_clear)
+        clearButton.visibility = clearButtonVisibility(inputEditText.text)
         clearButton.setOnClickListener {
             inputEditText.setText("")
             hideKeyboard()
