@@ -14,4 +14,5 @@
     <dimen name="setting_row_font_size">16sp</dimen>
     <dimen name="header_height">56dp</dimen>
     <dimen name="settings_row_height">61dp</dimen>
+    <dimen name="search_bar_text_size">16sp</dimen>
 </resources>
