@@ -54,5 +54,10 @@
             android:src="@drawable/ic_16_cross"
             app:tint="@color/search_field_content_color" />
     </LinearLayout>
-
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_marginTop="@dimen/margin_medium"
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 </LinearLayout>
