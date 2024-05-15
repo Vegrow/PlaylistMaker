@@ -15,4 +15,6 @@
     <color name="text_color_default">@color/white</color>
     <color name="text_color_secondary">@color/white</color>
     <color name="icon_tint_secondary">@color/white</color>
+    <color name="button_background_tint">@color/white</color>
+    <color name="text_color_inverted">#1A1B22</color>
 </resources>
