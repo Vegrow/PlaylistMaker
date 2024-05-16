@@ -100,6 +100,7 @@ class SearchActivity : AppCompatActivity() {
             inputEditText.setText("")
             hideKeyboard()
             trackList.clear()
+            hideAlertView()
         }
 
         val simpleTextWatcher = object : TextWatcher {
@@ -146,7 +147,7 @@ class SearchActivity : AppCompatActivity() {
 
     private fun onSuccess(response: TrackResponse?) {
         if (response?.results?.isNotEmpty() == true) {
-            val tracks = response.results.mapTo(trackList) {
+            response.results.mapTo(trackList) {
                 trackConverter.convert(it)
             }
             hideAlertView()
