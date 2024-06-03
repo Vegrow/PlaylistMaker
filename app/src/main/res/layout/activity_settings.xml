@@ -24,7 +24,8 @@
             android:layout_weight="1"
             android:text="@string/dark_theme" />
 
-        <Switch
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_theme"
             android:layout_width="56dp"
             android:layout_height="match_parent"
             android:layout_marginEnd="6dp" />

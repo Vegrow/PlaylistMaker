@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 
 class SettingsActivity : AppCompatActivity() {
@@ -38,6 +39,13 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.text_view_share_app).setOnClickListener(clickListener)
         findViewById<TextView>(R.id.text_view_write_to_support).setOnClickListener(clickListener)
         findViewById<TextView>(R.id.text_view_terms_of_use).setOnClickListener(clickListener)
+        val themeSwitcher = findViewById<SwitchMaterial>(R.id.switch_theme)
+        (applicationContext as App).apply {
+            themeSwitcher.isChecked = darkThemeEnabled
+            themeSwitcher.setOnCheckedChangeListener { _, checked ->
+                switchTheme(checked)
+            }
+        }
     }
 
     private fun onButtonClick(view: View) {

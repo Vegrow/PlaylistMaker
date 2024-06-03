@@ -1,4 +1,4 @@
-package com.example.playlistmaker.adapter
+package com.example.playlistmaker.presentation.search.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -14,11 +14,12 @@ import com.example.playlistmaker.R
 import com.example.playlistmaker.models.Track
 
 class TrackAdapter(
-    private val tracks: List<Track>
+    private val tracks: List<Track>,
+    private val onClick: (Track) -> Unit,
 ) : RecyclerView.Adapter<TrackViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackViewHolder {
-        return TrackViewHolder(parent.inflate(R.layout.track_item))
+        return TrackViewHolder(parent.inflate(R.layout.track_item), onClick)
     }
 
     override fun onBindViewHolder(holder: TrackViewHolder, position: Int) {
@@ -32,7 +33,8 @@ class TrackAdapter(
 }
 
 class TrackViewHolder(
-    itemView: View
+    itemView: View,
+    private val onClick: (Track) -> Unit,
 ) : RecyclerView.ViewHolder(itemView) {
 
     private val trackName: TextView = itemView.findViewById(R.id.text_view_track_name)
@@ -50,6 +52,7 @@ class TrackViewHolder(
             .fitCenter()
             .transform(RoundedCorners(2.dpToPx(itemView.context)))
             .into(artworkIcon)
+        itemView.setOnClickListener { onClick.invoke(model) }
     }
 
 }
