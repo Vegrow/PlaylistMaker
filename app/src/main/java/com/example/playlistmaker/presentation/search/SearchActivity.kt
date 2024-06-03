@@ -1,10 +1,11 @@
-package com.example.playlistmaker
+package com.example.playlistmaker.presentation.search
 
 import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.view.View.GONE
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -15,12 +16,15 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.playlistmaker.adapter.TrackAdapter
+import com.example.playlistmaker.App
+import com.example.playlistmaker.R
 import com.example.playlistmaker.data.ITunesApi
 import com.example.playlistmaker.data.TrackConverter
 import com.example.playlistmaker.models.Track
 import com.example.playlistmaker.models.data.TrackResponse
+import com.example.playlistmaker.presentation.search.adapter.TrackAdapter
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -28,7 +32,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class SearchActivity : AppCompatActivity() {
-
 
     private val iTunesBaseUrl = "https://itunes.apple.com"
     private val retrofit = Retrofit.Builder()
@@ -38,7 +41,10 @@ class SearchActivity : AppCompatActivity() {
     private val imdbService = retrofit.create(ITunesApi::class.java)
     private val trackConverter = TrackConverter()
     private val trackList = mutableListOf<Track>()
-    private val trackAdapter = TrackAdapter(trackList)
+    private val trackAdapter = TrackAdapter(trackList, ::onClick)
+    private lateinit var searchHistory: SearchHistory
+    private lateinit var historyAdapter: TrackAdapter
+
 
     // Зачем нужна - не понятно, если можно напрямую достать текст из textEdit
     private var userSearchInput = ""
@@ -48,10 +54,15 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var alertImage: ImageView
     private lateinit var alertTextView: TextView
     private lateinit var alertButton: Button
+    private lateinit var historyView: View
+    private lateinit var historyClearButton: Button
+    private lateinit var historyRecyclerView: RecyclerView
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
+        searchHistory = SearchHistory(getSharedPreferences(App.SHARED_PREFERENCES, MODE_PRIVATE))
         setUpViews()
     }
 
@@ -75,6 +86,20 @@ class SearchActivity : AppCompatActivity() {
         setUpSearchBar()
         setUpRecycler()
         setUpAlertView()
+        setUpSearchHistory()
+    }
+
+    private fun setUpSearchHistory() {
+        historyView = findViewById(R.id.history_view)
+        historyClearButton = findViewById(R.id.history_clear_button)
+        historyClearButton.setOnClickListener {
+            searchHistory.clearHistoryList()
+            historyView.visibility = GONE
+        }
+        historyRecyclerView = findViewById(R.id.history_recycle_view)
+        historyRecyclerView.layoutManager = LinearLayoutManager(this)
+        historyAdapter = TrackAdapter(searchHistory.historyList, ::onClick)
+        historyRecyclerView.adapter = historyAdapter
     }
 
     private fun setUpAlertView() {
@@ -107,6 +132,7 @@ class SearchActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 clearButton.visibility = clearButtonVisibility(s)
+                updateHistoryViewVisibility()
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -121,6 +147,7 @@ class SearchActivity : AppCompatActivity() {
             }
             false
         }
+        inputEditText.setOnFocusChangeListener { _, _ -> updateHistoryViewVisibility() }
     }
 
     private fun searchTrack() {
@@ -209,6 +236,19 @@ class SearchActivity : AppCompatActivity() {
         alertTextView.text = getString(textRes)
         alertButton.visibility = if (showUpdateButton) View.VISIBLE else View.GONE
         alertView.visibility = View.VISIBLE
+    }
+
+    private fun updateHistoryViewVisibility() {
+        historyView.visibility = if (
+            inputEditText.hasFocus()
+            && inputEditText.text.isEmpty()
+            && searchHistory.historyList.isNotEmpty()
+        ) View.VISIBLE else View.GONE
+    }
+
+    private fun onClick(track: Track) {
+        searchHistory.addTrack(track)
+        historyAdapter.notifyDataSetChanged()
     }
 
     private companion object {

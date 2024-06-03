@@ -10,6 +10,7 @@ class TrackConverter {
     private val formatter = SimpleDateFormat("mm:ss", Locale.getDefault())
 
     fun convert(track: TrackDTO) = Track(
+        trackId = track.trackId,
         trackName = track.artistName,
         artistName = track.artistName,
         trackTime = formatter.format(track.trackTimeMillis),

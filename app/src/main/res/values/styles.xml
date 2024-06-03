@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="MainScreenButtonStyle" parent="@style/Widget.MaterialComponents.Button.UnelevatedButton">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/zero_size</item>
@@ -21,6 +22,7 @@
         <item name="iconTint">@color/icon_default_tint_const</item>
         <item name="android:layout_marginHorizontal">@dimen/padding_medium</item>
     </style>
+
     <style name="SettingsTextViewStyle" parent="Widget.MaterialComponents.TextView">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/settings_row_height</item>
@@ -49,9 +51,25 @@
         <item name="navigationIconTint">@color/icon_default_tint</item>
     </style>
 
-    <style name="ToolbarStyleTextAppearance" >
+    <style name="ToolbarStyleTextAppearance">
         <item name="android:fontFamily">@font/ys_display_medium</item>
         <item name="android:textFontWeight">500</item>
         <item name="android:textSize">@dimen/button_font_size</item>
+    </style>
+
+    <style name="SearchScreenButtonStyle" parent="@style/Widget.MaterialComponents.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:backgroundTint">@color/button_background_tint</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="android:insetTop">@dimen/button_inset</item>
+        <item name="android:insetBottom">@dimen/button_inset</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">@font/ys_display_medium</item>
+        <item name="android:textFontWeight">500</item>
+        <item name="cornerRadius">54dp</item>
+        <item name="android:textColor">@color/text_color_inverted</item>
+        <item name="android:textSize">@dimen/alert_update_button_text_size</item>
     </style>
 </resources>
