@@ -17,4 +17,5 @@
     <color name="icon_tint_secondary">@color/white</color>
     <color name="button_background_tint">@color/white</color>
     <color name="text_color_inverted">#1A1B22</color>
+    <color name="media_player_buttons_background">#40FFFFFF</color>
 </resources>

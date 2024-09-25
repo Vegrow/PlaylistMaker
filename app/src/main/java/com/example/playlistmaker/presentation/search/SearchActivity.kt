@@ -24,6 +24,7 @@ import com.example.playlistmaker.data.ITunesApi
 import com.example.playlistmaker.data.TrackConverter
 import com.example.playlistmaker.models.Track
 import com.example.playlistmaker.models.data.TrackResponse
+import com.example.playlistmaker.presentation.player.MediaPlayerActivity
 import com.example.playlistmaker.presentation.search.adapter.TrackAdapter
 import retrofit2.Call
 import retrofit2.Callback
@@ -249,6 +250,7 @@ class SearchActivity : AppCompatActivity() {
     private fun onClick(track: Track) {
         searchHistory.addTrack(track)
         historyAdapter.notifyDataSetChanged()
+        startActivity(MediaPlayerActivity.newIntent(this, track))
     }
 
     private companion object {
