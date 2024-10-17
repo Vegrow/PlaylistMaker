@@ -2,16 +2,20 @@ package com.example.playlistmaker.presentation.search
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -26,6 +30,7 @@ import com.example.playlistmaker.models.Track
 import com.example.playlistmaker.models.data.TrackResponse
 import com.example.playlistmaker.presentation.player.MediaPlayerActivity
 import com.example.playlistmaker.presentation.search.adapter.TrackAdapter
+import com.example.playlistmaker.presentation.utils.Debounce
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -43,6 +48,8 @@ class SearchActivity : AppCompatActivity() {
     private val trackConverter = TrackConverter()
     private val trackList = mutableListOf<Track>()
     private val trackAdapter = TrackAdapter(trackList, ::onClick)
+    private val handler = Handler(Looper.getMainLooper())
+    private val searchRunnable = Runnable { searchTrack() }
     private lateinit var searchHistory: SearchHistory
     private lateinit var historyAdapter: TrackAdapter
 
@@ -58,6 +65,7 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var historyView: View
     private lateinit var historyClearButton: Button
     private lateinit var historyRecyclerView: RecyclerView
+    private lateinit var progressBar: ProgressBar
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +73,11 @@ class SearchActivity : AppCompatActivity() {
         setContentView(R.layout.activity_search)
         searchHistory = SearchHistory(getSharedPreferences(App.SHARED_PREFERENCES, MODE_PRIVATE))
         setUpViews()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(searchRunnable)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -88,6 +101,7 @@ class SearchActivity : AppCompatActivity() {
         setUpRecycler()
         setUpAlertView()
         setUpSearchHistory()
+        progressBar = findViewById(R.id.progress_bar)
     }
 
     private fun setUpSearchHistory() {
@@ -126,6 +140,7 @@ class SearchActivity : AppCompatActivity() {
             inputEditText.setText("")
             hideKeyboard()
             trackList.clear()
+            trackAdapter.notifyDataSetChanged()
             hideAlertView()
         }
 
@@ -133,16 +148,19 @@ class SearchActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 clearButton.visibility = clearButtonVisibility(s)
+                recyclerView.visibility = GONE
                 updateHistoryViewVisibility()
             }
 
             override fun afterTextChanged(s: Editable?) {
                 userSearchInput = s.toString()
+                searchDebounce()
             }
         }
         inputEditText.addTextChangedListener(simpleTextWatcher)
         inputEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
+                handler.removeCallbacks(searchRunnable)
                 searchTrack()
                 return@setOnEditorActionListener true
             }
@@ -153,6 +171,7 @@ class SearchActivity : AppCompatActivity() {
 
     private fun searchTrack() {
         if (inputEditText.text.isNotEmpty()) {
+            showLoader()
             imdbService.search(inputEditText.text.toString())
                 .enqueue(object : Callback<TrackResponse> {
                     override fun onResponse(
@@ -164,35 +183,39 @@ class SearchActivity : AppCompatActivity() {
                         } else {
                             showConnectionErrorAlert()
                         }
+                        progressBar.visibility = GONE
                     }
 
                     override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
                         showConnectionErrorAlert()
+                        progressBar.visibility = GONE
                     }
+
                 })
         }
     }
 
+    private fun searchDebounce() {
+        handler.removeCallbacks(searchRunnable)
+        handler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_DELAY)
+    }
+
     private fun onSuccess(response: TrackResponse?) {
         if (response?.results?.isNotEmpty() == true) {
+            trackList.clear()
             response.results.mapTo(trackList) {
                 trackConverter.convert(it)
             }
             hideAlertView()
             trackAdapter.notifyDataSetChanged()
+            recyclerView.visibility = VISIBLE
             recyclerView.scrollToPosition(0)
         } else {
             showEmptyResultAlert()
         }
     }
 
-    private fun clearButtonVisibility(s: CharSequence?): Int {
-        return if (s.isNullOrEmpty()) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
-    }
+    private fun clearButtonVisibility(s: CharSequence?) = if (s.isNullOrEmpty()) GONE else VISIBLE
 
     private fun hideKeyboard() {
         this.currentFocus?.let { view ->
@@ -235,8 +258,8 @@ class SearchActivity : AppCompatActivity() {
         trackAdapter.notifyDataSetChanged()
         alertImage.setImageResource(imageRes)
         alertTextView.text = getString(textRes)
-        alertButton.visibility = if (showUpdateButton) View.VISIBLE else View.GONE
-        alertView.visibility = View.VISIBLE
+        alertButton.visibility = if (showUpdateButton) VISIBLE else GONE
+        alertView.visibility = VISIBLE
     }
 
     private fun updateHistoryViewVisibility() {
@@ -244,16 +267,26 @@ class SearchActivity : AppCompatActivity() {
             inputEditText.hasFocus()
             && inputEditText.text.isEmpty()
             && searchHistory.historyList.isNotEmpty()
-        ) View.VISIBLE else View.GONE
+        ) VISIBLE else GONE
     }
 
     private fun onClick(track: Track) {
-        searchHistory.addTrack(track)
-        historyAdapter.notifyDataSetChanged()
-        startActivity(MediaPlayerActivity.newIntent(this, track))
+        if (Debounce.isClickAllowed()) {
+            searchHistory.addTrack(track)
+            historyAdapter.notifyDataSetChanged()
+            startActivity(MediaPlayerActivity.newIntent(this, track))
+        }
+    }
+
+    private fun showLoader() {
+        progressBar.visibility = VISIBLE
+        alertView.visibility = GONE
+        historyView.visibility = GONE
+        recyclerView.visibility = GONE
     }
 
     private companion object {
         const val SEARCH_USER_INPUT_KEY = "SEARCH_USER_INPUT"
+        const val SEARCH_DEBOUNCE_DELAY = 2000L
     }
 }

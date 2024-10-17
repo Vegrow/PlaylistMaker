@@ -3,7 +3,10 @@ package com.example.playlistmaker.presentation.player
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
@@ -11,16 +14,41 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.example.playlistmaker.R
 import com.example.playlistmaker.models.Track
 import com.example.playlistmaker.presentation.utils.dpToPx
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MediaPlayerActivity : AppCompatActivity() {
 
     private lateinit var track: Track
+    private lateinit var playbackView: ImageView
+    private lateinit var timerView: TextView
+    private val mediaPlayer = ExtendedMediaPlayer()
+    private val timerFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
+    private val handler = Handler(Looper.getMainLooper())
+    private val timerRefreshRunnable = object : Runnable {
+        override fun run() {
+            updateTimer(mediaPlayer.currentPosition)
+            handler.postDelayed(this, TIMER_REFRESH_DELAY)
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_media_player)
         track = intent.getParcelableExtra(TRACK_KEY) ?: error("Без трека сюда не ходи")
         setUpViews()
+        preparePlayer()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mediaPlayer.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer.release()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -39,6 +67,45 @@ class MediaPlayerActivity : AppCompatActivity() {
     private fun setUpViews() {
         setUpToolbar()
         setUpTrackAttributes()
+        setUpPlaybackButton()
+        setUpTimer()
+    }
+
+    private fun setUpTimer() {
+        timerView = findViewById(R.id.text_view_timer)
+        updateTimer(progress = 0)
+    }
+
+    private fun updateTimer(progress: Int) {
+        timerView.text = timerFormat.format(progress)
+    }
+
+    private fun preparePlayer() {
+        mediaPlayer.setOnPreparedListener {
+            playbackView.isEnabled = true
+        }
+        mediaPlayer.setOnStartListener {
+            playbackView.setImageResource(R.drawable.media_pause_button)
+            handler.postDelayed(timerRefreshRunnable, TIMER_REFRESH_DELAY)
+        }
+        mediaPlayer.setOnPauseListener {
+            playbackView.setImageResource(R.drawable.media_play_button)
+            handler.removeCallbacks(timerRefreshRunnable)
+        }
+        mediaPlayer.setOnCompletionListener {
+            playbackView.setImageResource(R.drawable.media_play_button)
+            handler.removeCallbacks(timerRefreshRunnable)
+            updateTimer(progress = 0)
+        }
+        mediaPlayer.preparePlayer(track.previewUrl)
+    }
+
+    private fun setUpPlaybackButton() {
+        playbackView = findViewById(R.id.image_view_play)
+        playbackView.isActivated = false
+        playbackView.setOnClickListener {
+            mediaPlayer.onPlaybackClick()
+        }
     }
 
     private fun setUpTrackAttributes() {
@@ -83,6 +150,7 @@ class MediaPlayerActivity : AppCompatActivity() {
 
     companion object {
 
+        private const val TIMER_REFRESH_DELAY = 300L
         private const val TRACK_KEY = "track_key"
 
         fun newIntent(context: Context, track: Track) =
