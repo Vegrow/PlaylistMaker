@@ -1,6 +1,5 @@
 package com.example.playlistmaker.presentation.search.adapter
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +11,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.example.playlistmaker.R
 import com.example.playlistmaker.models.Track
+import com.example.playlistmaker.presentation.utils.dpToPx
 
 class TrackAdapter(
     private val tracks: List<Track>,
@@ -60,5 +60,3 @@ class TrackViewHolder(
 private fun ViewGroup.inflate(@LayoutRes resource: Int): View {
     return LayoutInflater.from(context).inflate(resource, this, false)
 }
-
-private fun Int.dpToPx(context: Context) = (this * context.resources.displayMetrics.density).toInt()

@@ -17,15 +17,18 @@
     <Button
         android:id="@+id/button_search"
         style="@style/MainScreenButtonStyle"
-        android:text="@string/search" />
+        android:text="@string/search"
+        app:icon="@drawable/ic_24_search" />
 
     <Button
         android:id="@+id/button_library"
         style="@style/MainScreenButtonStyle"
-        android:text="@string/media_library" />
+        android:text="@string/media_library"
+        app:icon="@drawable/ic_24_library" />
 
     <Button
         android:id="@+id/button_settings"
         style="@style/MainScreenButtonStyle"
-        android:text="@string/settings" />
+        android:text="@string/settings"
+        app:icon="@drawable/ic_24_settings" />
 </LinearLayout>

@@ -15,5 +15,9 @@ class TrackConverter {
         artistName = track.artistName,
         trackTime = formatter.format(track.trackTimeMillis),
         artworkUrl100 = track.artworkUrl100,
+        collectionName = track.collectionName,
+        releaseDate = track.releaseDate,
+        primaryGenreName = track.primaryGenreName,
+        country = track.country,
     )
 }

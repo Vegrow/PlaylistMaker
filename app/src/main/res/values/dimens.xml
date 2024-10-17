@@ -33,6 +33,9 @@
 
     <!-- fonts -->
     <dimen name="font_size_11">11sp</dimen>
+    <dimen name="font_size_13">14sp</dimen>
+    <dimen name="font_size_14">14sp</dimen>
     <dimen name="font_size_16">16sp</dimen>
     <dimen name="font_size_19">19sp</dimen>
+    <dimen name="font_size_22">22sp</dimen>
 </resources>
