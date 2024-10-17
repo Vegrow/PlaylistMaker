@@ -68,6 +68,14 @@
             android:layout_marginTop="@dimen/margin_medium"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
+        <ProgressBar android:id="@+id/progress_bar"
+            android:layout_marginTop="140dp"
+            android:layout_width="@dimen/progress_bar_size"
+            android:layout_height="@dimen/progress_bar_size"
+            android:layout_gravity="center_horizontal"
+            android:indeterminateTint="@color/progress_bar_indeterminate"
+            android:visibility="gone"/>
+
         <LinearLayout
             android:id="@+id/alert_view"
             android:layout_width="match_parent"

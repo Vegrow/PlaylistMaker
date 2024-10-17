@@ -11,7 +11,7 @@ class TrackConverter {
 
     fun convert(track: TrackDTO) = Track(
         trackId = track.trackId,
-        trackName = track.artistName,
+        trackName = track.trackName,
         artistName = track.artistName,
         trackTime = formatter.format(track.trackTimeMillis),
         artworkUrl100 = track.artworkUrl100,
@@ -19,5 +19,6 @@ class TrackConverter {
         releaseDate = track.releaseDate,
         primaryGenreName = track.primaryGenreName,
         country = track.country,
+        previewUrl = track.previewUrl,
     )
 }
