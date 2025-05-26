@@ -19,4 +19,5 @@
     <color name="button_background_tint">#1A1B22</color>
     <color name="text_color_inverted">@color/white</color>
     <color name="media_player_buttons_background">#401A1B22</color>
+    <color name="progress_bar_indeterminate">#3772E7</color>
 </resources>
