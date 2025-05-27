@@ -1,4 +1,4 @@
-package com.example.playlistmaker.models.data
+package com.example.playlistmaker.data.models
 
 data class TrackDTO(
     val trackId: String,
