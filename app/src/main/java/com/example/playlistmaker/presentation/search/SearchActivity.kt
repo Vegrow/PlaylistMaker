@@ -23,29 +23,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.playlistmaker.App
+import com.example.playlistmaker.Creator
 import com.example.playlistmaker.R
-import com.example.playlistmaker.data.ITunesApi
-import com.example.playlistmaker.data.TrackConverter
-import com.example.playlistmaker.models.Track
-import com.example.playlistmaker.models.data.TrackResponse
+import com.example.playlistmaker.domain.api.TracksInteractor
+import com.example.playlistmaker.domain.models.Track
 import com.example.playlistmaker.presentation.player.MediaPlayerActivity
 import com.example.playlistmaker.presentation.search.adapter.TrackAdapter
 import com.example.playlistmaker.presentation.utils.Debounce
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+
 
 class SearchActivity : AppCompatActivity() {
 
-    private val iTunesBaseUrl = "https://itunes.apple.com"
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(iTunesBaseUrl)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-    private val imdbService = retrofit.create(ITunesApi::class.java)
-    private val trackConverter = TrackConverter()
+    private lateinit var tracksInteractor: TracksInteractor
     private val trackList = mutableListOf<Track>()
     private val trackAdapter = TrackAdapter(trackList, ::onClick)
     private val handler = Handler(Looper.getMainLooper())
@@ -71,6 +60,7 @@ class SearchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
+        tracksInteractor = Creator.provideTracksInteractor()
         searchHistory = SearchHistory(getSharedPreferences(App.SHARED_PREFERENCES, MODE_PRIVATE))
         setUpViews()
     }
@@ -172,26 +162,22 @@ class SearchActivity : AppCompatActivity() {
     private fun searchTrack() {
         if (inputEditText.text.isNotEmpty()) {
             showLoader()
-            imdbService.search(inputEditText.text.toString())
-                .enqueue(object : Callback<TrackResponse> {
-                    override fun onResponse(
-                        call: Call<TrackResponse>,
-                        response: Response<TrackResponse>
-                    ) {
-                        if (response.code() == 200) {
-                            onSuccess(response.body())
-                        } else {
-                            showConnectionErrorAlert()
-                        }
+
+            tracksInteractor.searchTracks(
+                expression = inputEditText.text.toString(),
+                onSuccess = {
+                    runOnUiThread {
+                        onSuccess(it)
                         progressBar.visibility = GONE
                     }
-
-                    override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
+                },
+                onFailure = {
+                    runOnUiThread {
                         showConnectionErrorAlert()
                         progressBar.visibility = GONE
                     }
-
-                })
+                }
+            )
         }
     }
 
@@ -200,12 +186,10 @@ class SearchActivity : AppCompatActivity() {
         handler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_DELAY)
     }
 
-    private fun onSuccess(response: TrackResponse?) {
-        if (response?.results?.isNotEmpty() == true) {
+    private fun onSuccess(foundTracks: List<Track>?) {
+        if (foundTracks?.isNotEmpty() == true) {
             trackList.clear()
-            response.results.mapTo(trackList) {
-                trackConverter.convert(it)
-            }
+            trackList.addAll(foundTracks)
             hideAlertView()
             trackAdapter.notifyDataSetChanged()
             recyclerView.visibility = VISIBLE
