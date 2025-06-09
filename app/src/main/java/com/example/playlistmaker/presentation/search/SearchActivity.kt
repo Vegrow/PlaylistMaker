@@ -22,9 +22,9 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.playlistmaker.App
 import com.example.playlistmaker.Creator
 import com.example.playlistmaker.R
+import com.example.playlistmaker.domain.api.SearchHistoryInteractor
 import com.example.playlistmaker.domain.api.TracksInteractor
 import com.example.playlistmaker.domain.models.Track
 import com.example.playlistmaker.presentation.player.MediaPlayerActivity
@@ -36,11 +36,12 @@ class SearchActivity : AppCompatActivity() {
 
     private lateinit var tracksInteractor: TracksInteractor
     private val trackList = mutableListOf<Track>()
+    private val searchHistoryTrackList = mutableListOf<Track>()
     private val trackAdapter = TrackAdapter(trackList, ::onClick)
     private val handler = Handler(Looper.getMainLooper())
     private val searchRunnable = Runnable { searchTrack() }
-    private lateinit var searchHistory: SearchHistory
-    private lateinit var historyAdapter: TrackAdapter
+    private lateinit var searchHistoryInteractor: SearchHistoryInteractor
+    private var historyAdapter = TrackAdapter(searchHistoryTrackList, ::onClick)
 
 
     // Зачем нужна - не понятно, если можно напрямую достать текст из textEdit
@@ -61,7 +62,8 @@ class SearchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
         tracksInteractor = Creator.provideTracksInteractor()
-        searchHistory = SearchHistory(getSharedPreferences(App.SHARED_PREFERENCES, MODE_PRIVATE))
+        searchHistoryInteractor = Creator.provideSearchHistoryInteractor(context = this)
+        searchHistoryInteractor.getHistory(::onHistoryRequestResult)
         setUpViews()
     }
 
@@ -98,12 +100,12 @@ class SearchActivity : AppCompatActivity() {
         historyView = findViewById(R.id.history_view)
         historyClearButton = findViewById(R.id.history_clear_button)
         historyClearButton.setOnClickListener {
-            searchHistory.clearHistoryList()
+            searchHistoryTrackList.clear()
+            searchHistoryInteractor.clearHistoryList()
             historyView.visibility = GONE
         }
         historyRecyclerView = findViewById(R.id.history_recycle_view)
         historyRecyclerView.layoutManager = LinearLayoutManager(this)
-        historyAdapter = TrackAdapter(searchHistory.historyList, ::onClick)
         historyRecyclerView.adapter = historyAdapter
     }
 
@@ -250,13 +252,14 @@ class SearchActivity : AppCompatActivity() {
         historyView.visibility = if (
             inputEditText.hasFocus()
             && inputEditText.text.isEmpty()
-            && searchHistory.historyList.isNotEmpty()
+            && searchHistoryTrackList.isNotEmpty()
         ) VISIBLE else GONE
     }
 
     private fun onClick(track: Track) {
         if (Debounce.isClickAllowed()) {
-            searchHistory.addTrack(track)
+            searchHistoryTrackList.add(track)
+            searchHistoryInteractor.addTrack(track)
             historyAdapter.notifyDataSetChanged()
             startActivity(MediaPlayerActivity.newIntent(this, track))
         }
@@ -267,6 +270,12 @@ class SearchActivity : AppCompatActivity() {
         alertView.visibility = GONE
         historyView.visibility = GONE
         recyclerView.visibility = GONE
+    }
+
+    private fun onHistoryRequestResult(tracks: List<Track>) {
+        searchHistoryTrackList.clear()
+        searchHistoryTrackList.addAll(tracks)
+        historyAdapter.notifyDataSetChanged()
     }
 
     private companion object {
