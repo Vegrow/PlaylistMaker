@@ -22,36 +22,26 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.playlistmaker.App
+import com.example.playlistmaker.Creator
 import com.example.playlistmaker.R
-import com.example.playlistmaker.data.ITunesApi
-import com.example.playlistmaker.data.TrackConverter
-import com.example.playlistmaker.models.Track
-import com.example.playlistmaker.models.data.TrackResponse
+import com.example.playlistmaker.domain.api.SearchHistoryInteractor
+import com.example.playlistmaker.domain.api.TracksInteractor
+import com.example.playlistmaker.domain.models.Track
 import com.example.playlistmaker.presentation.player.MediaPlayerActivity
 import com.example.playlistmaker.presentation.search.adapter.TrackAdapter
 import com.example.playlistmaker.presentation.utils.Debounce
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+
 
 class SearchActivity : AppCompatActivity() {
 
-    private val iTunesBaseUrl = "https://itunes.apple.com"
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(iTunesBaseUrl)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-    private val imdbService = retrofit.create(ITunesApi::class.java)
-    private val trackConverter = TrackConverter()
+    private lateinit var tracksInteractor: TracksInteractor
     private val trackList = mutableListOf<Track>()
+    private val searchHistoryTrackList = mutableListOf<Track>()
     private val trackAdapter = TrackAdapter(trackList, ::onClick)
     private val handler = Handler(Looper.getMainLooper())
     private val searchRunnable = Runnable { searchTrack() }
-    private lateinit var searchHistory: SearchHistory
-    private lateinit var historyAdapter: TrackAdapter
+    private lateinit var searchHistoryInteractor: SearchHistoryInteractor
+    private var historyAdapter = TrackAdapter(searchHistoryTrackList, ::onClick)
 
 
     // Зачем нужна - не понятно, если можно напрямую достать текст из textEdit
@@ -71,7 +61,9 @@ class SearchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
-        searchHistory = SearchHistory(getSharedPreferences(App.SHARED_PREFERENCES, MODE_PRIVATE))
+        tracksInteractor = Creator.provideTracksInteractor()
+        searchHistoryInteractor = Creator.provideSearchHistoryInteractor(context = this)
+        searchHistoryInteractor.getHistory(::onHistoryRequestResult)
         setUpViews()
     }
 
@@ -108,12 +100,12 @@ class SearchActivity : AppCompatActivity() {
         historyView = findViewById(R.id.history_view)
         historyClearButton = findViewById(R.id.history_clear_button)
         historyClearButton.setOnClickListener {
-            searchHistory.clearHistoryList()
+            searchHistoryTrackList.clear()
+            searchHistoryInteractor.clearHistoryList()
             historyView.visibility = GONE
         }
         historyRecyclerView = findViewById(R.id.history_recycle_view)
         historyRecyclerView.layoutManager = LinearLayoutManager(this)
-        historyAdapter = TrackAdapter(searchHistory.historyList, ::onClick)
         historyRecyclerView.adapter = historyAdapter
     }
 
@@ -172,26 +164,22 @@ class SearchActivity : AppCompatActivity() {
     private fun searchTrack() {
         if (inputEditText.text.isNotEmpty()) {
             showLoader()
-            imdbService.search(inputEditText.text.toString())
-                .enqueue(object : Callback<TrackResponse> {
-                    override fun onResponse(
-                        call: Call<TrackResponse>,
-                        response: Response<TrackResponse>
-                    ) {
-                        if (response.code() == 200) {
-                            onSuccess(response.body())
-                        } else {
-                            showConnectionErrorAlert()
-                        }
+
+            tracksInteractor.searchTracks(
+                expression = inputEditText.text.toString(),
+                onSuccess = {
+                    runOnUiThread {
+                        onSuccess(it)
                         progressBar.visibility = GONE
                     }
-
-                    override fun onFailure(call: Call<TrackResponse>, t: Throwable) {
+                },
+                onFailure = {
+                    runOnUiThread {
                         showConnectionErrorAlert()
                         progressBar.visibility = GONE
                     }
-
-                })
+                }
+            )
         }
     }
 
@@ -200,12 +188,10 @@ class SearchActivity : AppCompatActivity() {
         handler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_DELAY)
     }
 
-    private fun onSuccess(response: TrackResponse?) {
-        if (response?.results?.isNotEmpty() == true) {
+    private fun onSuccess(foundTracks: List<Track>?) {
+        if (foundTracks?.isNotEmpty() == true) {
             trackList.clear()
-            response.results.mapTo(trackList) {
-                trackConverter.convert(it)
-            }
+            trackList.addAll(foundTracks)
             hideAlertView()
             trackAdapter.notifyDataSetChanged()
             recyclerView.visibility = VISIBLE
@@ -266,13 +252,14 @@ class SearchActivity : AppCompatActivity() {
         historyView.visibility = if (
             inputEditText.hasFocus()
             && inputEditText.text.isEmpty()
-            && searchHistory.historyList.isNotEmpty()
+            && searchHistoryTrackList.isNotEmpty()
         ) VISIBLE else GONE
     }
 
     private fun onClick(track: Track) {
         if (Debounce.isClickAllowed()) {
-            searchHistory.addTrack(track)
+            searchHistoryTrackList.add(track)
+            searchHistoryInteractor.addTrack(track)
             historyAdapter.notifyDataSetChanged()
             startActivity(MediaPlayerActivity.newIntent(this, track))
         }
@@ -283,6 +270,12 @@ class SearchActivity : AppCompatActivity() {
         alertView.visibility = GONE
         historyView.visibility = GONE
         recyclerView.visibility = GONE
+    }
+
+    private fun onHistoryRequestResult(tracks: List<Track>) {
+        searchHistoryTrackList.clear()
+        searchHistoryTrackList.addAll(tracks)
+        historyAdapter.notifyDataSetChanged()
     }
 
     private companion object {

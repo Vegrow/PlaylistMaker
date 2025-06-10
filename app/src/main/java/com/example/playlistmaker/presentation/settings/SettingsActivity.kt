@@ -1,4 +1,4 @@
-package com.example.playlistmaker
+package com.example.playlistmaker.presentation.settings
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -8,13 +8,20 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.playlistmaker.App
+import com.example.playlistmaker.Creator
+import com.example.playlistmaker.R
+import com.example.playlistmaker.domain.api.SettingsInteractor
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 
 class SettingsActivity : AppCompatActivity() {
 
+    private lateinit var settingsInteractor: SettingsInteractor
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        settingsInteractor = Creator.provideSettingsInteractor(this)
         setContentView(R.layout.activity_settings)
         setUpViews()
     }
@@ -41,7 +48,7 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.text_view_terms_of_use).setOnClickListener(clickListener)
         val themeSwitcher = findViewById<SwitchMaterial>(R.id.switch_theme)
         (applicationContext as App).apply {
-            themeSwitcher.isChecked = darkThemeEnabled
+            themeSwitcher.isChecked = settingsInteractor.isDarkThemeEnabled() ?: false
             themeSwitcher.setOnCheckedChangeListener { _, checked ->
                 switchTheme(checked)
             }
